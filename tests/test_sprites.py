@@ -64,7 +64,20 @@ class CanonicalSpriteTests(unittest.TestCase):
             source = root / "bad.png"
             source.write_bytes(b"not a PNG")
 
-            with self.assertRaisesRegex(ValueError, "valid PNG header"):
+            with self.assertRaisesRegex(ValueError, "complete, readable PNG"):
+                import_canonical_sprite(project.path, source)
+
+            self.assertIsNone(get_canonical_sprite(project.path))
+            self.assertFalse((project.path / "assets").exists())
+
+    def test_rejects_png_header_without_pixel_data(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root)
+            project = create_project(ProjectSettings("Cat Study"), root)
+            source = root / "truncated.png"
+            source.write_bytes(_png_bytes()[:33])
+
+            with self.assertRaisesRegex(ValueError, "complete, readable PNG"):
                 import_canonical_sprite(project.path, source)
 
             self.assertIsNone(get_canonical_sprite(project.path))
@@ -161,7 +174,7 @@ class CanonicalSpriteTests(unittest.TestCase):
                 main(["import-sprite", str(child.path), str(source)])
 
             self.assertEqual(exit_result.exception.code, 2)
-            self.assertIn("valid PNG header", error_output.getvalue())
+            self.assertIn("complete, readable PNG", error_output.getvalue())
             self.assertIsNone(get_canonical_sprite(child.path))
             self.assertFalse((child.path / "assets").exists())
 

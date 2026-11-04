@@ -2,22 +2,19 @@
 
 import hashlib
 import sqlite3
-import struct
-import zlib
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from PIL import Image, UnidentifiedImageError
+
 from .project import (
     DATABASE_NAME,
     _upgrade_project_schema,
     open_project,
 )
-
-
-PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 @dataclass(frozen=True)
@@ -32,23 +29,18 @@ class CanonicalSprite:
 
 
 def _read_png_dimensions(path: Path) -> tuple[int, int]:
-    """Check the PNG signature and IHDR chunk, then read its dimensions."""
-    with path.open("rb") as image:
-        header = image.read(33)
+    """Fully decode a PNG before returning its dimensions."""
+    try:
+        with Image.open(path) as image:
+            if image.format != "PNG":
+                raise ValueError("The source file must contain PNG image data.")
+            image.verify()
 
-    if (
-        len(header) != 33
-        or header[:8] != PNG_SIGNATURE
-        or int.from_bytes(header[8:12], "big") != 13
-        or header[12:16] != b"IHDR"
-        or zlib.crc32(header[12:29]) != int.from_bytes(header[29:33], "big")
-    ):
-        raise ValueError("The source does not have a valid PNG header.")
-
-    width, height = struct.unpack(">II", header[16:24])
-    if width == 0 or height == 0:
-        raise ValueError("PNG dimensions must be positive.")
-    return width, height
+        with Image.open(path) as image:
+            image.load()
+            return image.size
+    except (UnidentifiedImageError, OSError, SyntaxError) as error:
+        raise ValueError("The source is not a complete, readable PNG image.") from error
 
 
 def import_canonical_sprite(project_path: Path, source_path: Path) -> CanonicalSprite:

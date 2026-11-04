@@ -106,3 +106,9 @@ latency, and cost.
 - Rework guidance must be optional.
 - A UI is required for timeline, preview, version comparison, and iterative refinement.
 - Hosted Nano Banana is the first practical creativity benchmark; SDXL/FLUX with ComfyUI are the future learning and local-control path.
+
+## 8. PNG decoding and RGBA palette extraction — 2026-11-04
+
+- A valid PNG header describes the image but does not prove that its pixel data is complete. Pillow now verifies and decodes the entire file before import succeeds.
+- RGBA stores red, green, blue, and alpha for each pixel. Alpha `0` is fully transparent; values from `1` through `255` remain visible and are counted as distinct colors.
+- Candidate colors are sorted by pixel count and then RGBA value. This makes the output deterministic while leaving palette approval to the owner.

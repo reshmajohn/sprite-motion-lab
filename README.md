@@ -4,11 +4,15 @@ Sprite Motion Lab is a local Python project for making coherent pixel-art charac
 
 ## Current status
 
-The command-line prototype can create a parent directory for related sprite projects, create a new child project or initialize an existing child folder, and import a canonical PNG into that child. Each child has its own canvas dimensions. Sprite import keeps the original file unchanged and records the saved copy's dimensions and SHA-256 hash. Palette approval, timeline preview, export, and the browser UI are still planned. Later work will add storyboard choices, retained frame versions, and adaptive gap smoothing.
+The command-line prototype can create a parent directory for related sprite projects, create a new child project or initialize an existing child folder, and import a canonical PNG into that child. Each child has its own canvas dimensions. Sprite import keeps the original file unchanged, fully decodes the saved copy, and records its dimensions and SHA-256 hash. Exact nontransparent RGBA colors can be extracted as a candidate palette. Palette approval, timeline preview, export, and the browser UI are still planned. Later work will add storyboard choices, retained frame versions, and adaptive gap smoothing.
 
 ## Development setup
 
-This workspace uses an owner-managed virtual environment at `./.venv`. Use `.venv/bin/python` to run Python and `.venv/bin/pip install <pkg>` to install a package, recording installed packages in `requirements.txt`. This increment requires no third-party packages.
+This workspace uses an owner-managed virtual environment at `./.venv`. Use `.venv/bin/python` to run Python and `.venv/bin/pip` to install packages. Install the recorded dependencies from the repository root with:
+
+```sh
+.venv/bin/pip install -r requirements.txt
+```
 
 From the repository root, create a parent directory with default canvas dimensions for its child projects:
 
@@ -36,10 +40,11 @@ Skip `mkdir` if the folder already exists. Replace `PARENT_DIR` with the path pr
 ```sh
 .venv/bin/python -m sprite_motion_lab import-sprite "CHILD_DIR" "/absolute/path/to/cat.png"
 .venv/bin/python -m sprite_motion_lab show "CHILD_DIR"
+.venv/bin/python -m sprite_motion_lab show-palette "CHILD_DIR"
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Replace `CHILD_DIR` with the printed child path and the PNG path with your local file. Omit the project commands' `--width` and `--height` options to inherit the parent's defaults. `import-sprite` leaves the child's saved canvas settings unchanged and records the original PNG dimensions. It currently checks only the PNG header and dimensions. Pixel decoding, transparency checks, and palette extraction come later.
+Replace `CHILD_DIR` with the printed child path and the PNG path with your local file. Omit the project commands' `--width` and `--height` options to inherit the parent's defaults. `import-sprite` leaves the child's saved canvas settings unchanged. `show-palette` counts exact RGBA values, excludes fully transparent pixels, and reports partially transparent colors separately. The extracted colors are candidates only; palette editing, approval, and persistence come next.
 
 ## Project documents
 

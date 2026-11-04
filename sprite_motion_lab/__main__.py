@@ -4,6 +4,7 @@ import argparse
 import sqlite3
 from pathlib import Path
 
+from .palette import extract_canonical_palette
 from .project import (
     DATABASE_NAME,
     Project,
@@ -37,6 +38,21 @@ def _open_parent(directory: Path) -> Project:
             f"{directory} is an initialized child project, not a parent directory."
         )
     return parent
+
+
+def _open_child(directory: Path) -> Project:
+    if not directory.is_dir():
+        raise FileNotFoundError(f"Child project folder not found: {directory}")
+    parent = _open_parent(directory.parent)
+    if directory.resolve().parent != parent.path.resolve():
+        raise ValueError("The child folder must be directly inside its parent directory.")
+    try:
+        return open_project(directory)
+    except FileNotFoundError as error:
+        raise FileNotFoundError(
+            f"Child project is not initialized at {directory}. "
+            "Run import-project first."
+        ) from error
 
 
 # Read the input either from the call to main or from the arguments typed in terminal
@@ -110,6 +126,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     import_sprite.add_argument("png_file", type=Path, metavar="PNG_FILE", help="Original PNG to copy")
 
+    show_palette = commands.add_parser(
+        "show-palette",
+        help="Extract visible colors from a child's canonical sprite",
+        description="Fully decodes the canonical PNG and counts exact RGBA colors. Fully transparent pixels are reported separately.",
+    )
+    show_palette.add_argument(
+        "project_directory",
+        type=Path,
+        metavar="CHILD_DIR",
+        help="Initialized child project containing a canonical sprite",
+    )
+
     args = parser.parse_args(argv)
     try:
         if args.command == "add-project":
@@ -153,24 +181,24 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "import-sprite":
             child_directory = args.project_directory
-            if not child_directory.is_dir():
-                raise FileNotFoundError(f"Child project folder not found: {child_directory}")
-            parent = _open_parent(child_directory.parent)
-            if child_directory.resolve().parent != parent.path.resolve():
-                raise ValueError("The child folder must be directly inside its parent directory.")
-            try:
-                child = open_project(child_directory)
-            except FileNotFoundError as error:
-                raise FileNotFoundError(
-                    f"Child project is not initialized at {child_directory}. "
-                    "Run import-project first."
-                ) from error
+            child = _open_child(child_directory)
             sprite = import_canonical_sprite(child.path, args.png_file)
             print("Imported canonical sprite")
             print(f"Child project directory: {child.path}")
             print(f"PNG dimensions: {sprite.width} x {sprite.height}")
             print(f"SHA-256: {sprite.sha256}")
             print(f"Saved copy: {child.path / sprite.relative_path}")
+            return 0
+
+        if args.command == "show-palette":
+            child = _open_child(args.project_directory)
+            palette = extract_canonical_palette(child.path)
+            print(f"Candidate palette: {len(palette.colors)} nontransparent colors")
+            for color in palette.colors:
+                label = "pixel" if color.pixel_count == 1 else "pixels"
+                print(f"{color.hex_rgba}: {color.pixel_count} {label}")
+            print(f"Fully transparent pixels: {palette.transparent_pixel_count}")
+            print(f"Total pixels: {palette.total_pixel_count}")
             return 0
 
         if args.command == "create":
