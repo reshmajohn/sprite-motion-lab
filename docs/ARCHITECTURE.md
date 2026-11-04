@@ -81,7 +81,8 @@ Names may change during implementation, but these concepts must remain.
 
 | Entity | Important fields and behavior |
 | --- | --- |
-| `Project` | id, name, root path, created/updated time, target width/height, pixel scale, settings version. |
+| Parent directory | Groups child projects and stores default canvas dimensions. A child may override them. |
+| `Project` | id, name, parent directory, root path, created/updated time, own target width/height, pixel scale, settings version. |
 | `Character` | project id, canonical source asset, normalized reference asset, identity notes, approved palette id. |
 | `Palette` | ordered colors, transparency rule, extraction method, approval status, version. Preserve earlier approved palettes if changed. |
 | `ReferenceAsset` | source path, normalized path, role, SHA-256, dimensions, provenance/license notes. |
@@ -224,7 +225,7 @@ Optical flow may be explored later, but pixel sprites and large pose changes can
 
 ## 10. Project directory proposal
 
-Do not create all modules until their phase is approved. The eventual structure may resemble:
+Do not create all modules until their phase is approved. The eventual source structure may resemble:
 
 ```text
 AGENTS.md
@@ -237,8 +238,10 @@ src/sprite_motion_lab/
   providers/        # planner/renderer adapters
   ui/               # Gradio composition and callbacks
 tests/
-project_data/       # ignored local projects, never committed
+project_data/       # ignored local parent and child project directories
 ```
+
+The current local data layout is `project_data/<parent>/<child>/`. The parent stores default canvas dimensions; each child stores its own project settings and canonical sprite. A child folder may be created by the app or supplied as an existing folder; initialization adds metadata without replacing its files. Sprite import is a separate operation on an initialized child. The first CLI implementation reuses the same SQLite settings format for both levels so older project directories remain readable.
 
 ## 11. Testing strategy
 

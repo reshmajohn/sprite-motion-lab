@@ -20,6 +20,7 @@ This file records durable product and architecture choices. Codex should not sil
 | 2026-11-03 | Palette is owner-approved and enforced deterministically. | Generative output should not silently redefine the character palette. | A project explicitly opts into model-proposed palette exploration. |
 | 2026-11-03 | Sprite Motion Lab remains separate from Thread Cat. | It should be reusable and should not complicate the native macOS app. | Integration should remain file-based unless a real workflow requires more. |
 | 2026-11-03 | Create and maintain a public-facing `README.md` as part of the repository. | Keep detailed planning in `docs/` and include only verified features and instructions in the README. |
+| 2026-11-04 | A parent directory groups child projects and supplies default canvas dimensions; each child can override them. The app can create a new child or initialize an owner-created child folder. Canonical sprite import is a separate action on an initialized child. | The owner wants clear project setup steps and independent control of each child's folder, canvas, and art. | A hands-on workflow shows a different grouping is clearer. |
 
 ## Working assumptions
 
@@ -35,12 +36,11 @@ This file records durable product and architecture choices. Codex should not sil
 Resolve these only when their phase approaches:
 
 1. What public project/repository name does the owner want?
-2. Is 64×64 the first fixed canvas, or should the first vertical slice allow 32×32 and 48×48 immediately?
-3. Does Gradio provide an acceptable version gallery and interactive timeline, or is a small custom frontend justified?
-4. Which Nano Banana model/version gives the best cost/consistency balance when the first provider spike is run?
-5. Should the text storyboard planner use the same Gemini request, a cheaper text model, or initially be owner-authored to minimize cost?
-6. What pose guide is most practical for a quadruped pixel cat: silhouette, edge image, manually placed landmarks, rough painted mass, or a combination?
-7. Which SDXL and FLUX checkpoints/adapters have compatible licenses and work acceptably on 36 GB Apple unified memory?
-8. Should automatic palette quantization happen by default or present a before/after approval step for every generated version?
-9. What sprite-sheet packing and metadata format will Thread Cat consume?
-10. What retention/archival controls are needed if version history grows large?
+2. Does Gradio provide an acceptable version gallery and interactive timeline, or is a small custom frontend justified?
+3. Which Nano Banana model/version gives the best cost/consistency balance when the first provider spike is run?
+4. Should the text storyboard planner use the same Gemini request, a cheaper text model, or initially be owner-authored to minimize cost?
+5. What pose guide is most practical for a quadruped pixel cat: silhouette, edge image, manually placed landmarks, rough painted mass, or a combination?
+6. Which SDXL and FLUX checkpoints/adapters have compatible licenses and work acceptably on 36 GB Apple unified memory?
+7. Should automatic palette quantization happen by default or present a before/after approval step for every generated version?
+8. What sprite-sheet packing and metadata format will Thread Cat consume?
+9. What retention/archival controls are needed if version history grows large?

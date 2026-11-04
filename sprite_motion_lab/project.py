@@ -10,7 +10,31 @@ from uuid import uuid4
 
 
 DATABASE_NAME = "project.sqlite3"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+
+def _create_canonical_sprite_table(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS canonical_sprite (
+            id TEXT PRIMARY KEY,
+            source_name TEXT NOT NULL,
+            relative_path TEXT NOT NULL,
+            sha256 TEXT NOT NULL,
+            width INTEGER NOT NULL,
+            height INTEGER NOT NULL,
+            imported_at TEXT NOT NULL
+        )"""
+    )
+
+
+def _upgrade_project_schema(connection: sqlite3.Connection) -> None:
+    """Add sprite storage to a project created before imports existed."""
+    version = connection.execute("PRAGMA user_version").fetchone()[0]
+    if version == 1:
+        _create_canonical_sprite_table(connection)
+        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    elif version != SCHEMA_VERSION:
+        raise ValueError(f"Unsupported project schema version: {version}")
 
 
 @dataclass(frozen=True)
@@ -40,16 +64,10 @@ class Project:
     created_at: str
 
 
-def create_project(
-    settings: ProjectSettings, projects_root: Path = Path("project_data")
+def _save_project(
+    settings: ProjectSettings, project_path: Path, project_id: str | None = None
 ) -> Project:
-    """Create a new project directory and save its settings in SQLite."""
-    project_id = uuid4().hex
-    slug = re.sub(r"[^a-z0-9]+", "-", settings.name.lower()).strip("-")
-    slug = slug[:48].rstrip("-") or "project"
-    project_path = Path(projects_root) / f"{slug}-{project_id[:8]}"
-    project_path.mkdir(parents=True, exist_ok=False)
-
+    project_id = project_id or uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat()
     with closing(sqlite3.connect(project_path / DATABASE_NAME)) as connection:
         with connection:
@@ -74,9 +92,34 @@ def create_project(
                     created_at,
                 ),
             )
+            _create_canonical_sprite_table(connection)
             connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     return Project(project_id, settings, project_path, created_at)
+
+
+def create_project(
+    settings: ProjectSettings, projects_root: Path = Path("project_data")
+) -> Project:
+    """Create a new project directory and save its settings in SQLite."""
+    project_id = uuid4().hex
+    slug = re.sub(r"[^a-z0-9]+", "-", settings.name.lower()).strip("-")
+    slug = slug[:48].rstrip("-") or "project"
+    project_path = Path(projects_root) / f"{slug}-{project_id[:8]}"
+    project_path.mkdir(parents=True, exist_ok=False)
+    return _save_project(settings, project_path, project_id)
+
+
+def initialize_project_directory(settings: ProjectSettings, project_path: Path) -> Project:
+    """Add project metadata to an existing folder without replacing its files."""
+    project_path = Path(project_path)
+    if not project_path.exists():
+        raise FileNotFoundError(f"Child project folder does not exist: {project_path}")
+    if not project_path.is_dir():
+        raise NotADirectoryError(f"Child project path is not a folder: {project_path}")
+    if (project_path / DATABASE_NAME).exists():
+        raise FileExistsError(f"Project metadata already exists in {project_path}")
+    return _save_project(settings, project_path)
 
 
 def open_project(project_path: Path) -> Project:
@@ -88,7 +131,7 @@ def open_project(project_path: Path) -> Project:
 
     with closing(sqlite3.connect(database_path)) as connection:
         version = connection.execute("PRAGMA user_version").fetchone()[0]
-        if version != SCHEMA_VERSION:
+        if version not in (1, SCHEMA_VERSION):
             raise ValueError(f"Unsupported project schema version: {version}")
         row = connection.execute(
             "SELECT id, name, canvas_width, canvas_height, created_at FROM project"

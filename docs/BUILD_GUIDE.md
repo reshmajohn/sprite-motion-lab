@@ -67,18 +67,19 @@ Agree on the working repository name and establish the smallest Python project o
 
 ### Goal
 
-Create a local project, import a canonical transparent PNG, extract/approve a palette, create a simple preview from imported placeholder frames, and export a sprite sheet—without AI.
+Create a parent directory with default canvas dimensions, add a child project with its own canonical transparent PNG and dimensions, extract/approve a palette, create a simple preview from imported placeholder frames, and export a sprite sheet—without AI.
 
 ### Suggested increments
 
-1. Define validated project settings and create/open project folder.
-2. Import source asset non-destructively and record hash/dimensions.
-3. Extract nontransparent colors and display them in a minimal UI or test fixture.
-4. Approve/save a palette.
-5. Import two or three placeholder frame images.
-6. Normalize copies to target canvas using explicit anchors.
-7. Set per-frame duration and render a nearest-neighbor preview.
-8. Export PNG sequence, sheet, and manifest.
+1. Create/open a parent directory with default canvas dimensions.
+2. Create a named child project or initialize an owner-created child folder; allow child canvas overrides.
+3. Import the canonical PNG into an initialized child and record source hash/dimensions without altering existing files.
+4. Extract nontransparent colors and display them in a minimal UI or test fixture.
+5. Approve/save a palette.
+6. Import two or three placeholder frame images.
+7. Normalize copies to target canvas using explicit anchors.
+8. Set per-frame duration and render a nearest-neighbor preview.
+9. Export PNG sequence, sheet, and manifest.
 
 ### Tests
 

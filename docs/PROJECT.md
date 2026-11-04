@@ -63,6 +63,8 @@ flowchart TD
 
 ### Project setup
 
+The owner creates a parent directory for related sprite projects. Its canvas dimensions are defaults; each child project may choose its own dimensions and canonical character. The owner may have the app create a named child or initialize an existing child folder, then import its sprite as a separate action. Existing folder contents are preserved.
+
 The owner provides:
 
 - an approved canonical character sprite, preferably a transparent PNG;
@@ -173,7 +175,7 @@ The first useful product should support:
 
 ### First vertical slice
 
-The owner can create a local project, import a canonical cat, approve an extracted palette, add several placeholder frames, adjust their durations, preview them, and export a valid sprite sheet without any AI provider.
+The owner can create a parent directory and a child project, import a canonical cat into that child, approve an extracted palette, add several placeholder frames, adjust their durations, preview them, and export a valid sprite sheet without any AI provider.
 
 ### Hosted-model milestone
 

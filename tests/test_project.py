@@ -7,7 +7,13 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from sprite_motion_lab.__main__ import main
-from sprite_motion_lab.project import DATABASE_NAME, ProjectSettings, create_project, open_project
+from sprite_motion_lab.project import (
+    DATABASE_NAME,
+    ProjectSettings,
+    create_project,
+    initialize_project_directory,
+    open_project,
+)
 
 
 class ProjectTests(unittest.TestCase):
@@ -46,18 +52,50 @@ class ProjectTests(unittest.TestCase):
                 open_project(missing)
             self.assertFalse(missing.exists())
 
+    def test_initialize_existing_folder_preserves_its_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_root:
+            folder = Path(temporary_root) / "Pouncing Cat"
+            folder.mkdir()
+            notes = folder / "notes.txt"
+            notes.write_text("Keep this file", encoding="utf-8")
+
+            project = initialize_project_directory(ProjectSettings("Pouncing Cat", 48, 48), folder)
+
+            self.assertEqual(open_project(folder), project)
+            self.assertEqual(notes.read_text(encoding="utf-8"), "Keep this file")
+            with self.assertRaises(FileExistsError):
+                initialize_project_directory(ProjectSettings("Pouncing Cat"), folder)
+
+    def test_initialize_requires_existing_folder(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_root:
+            missing = Path(temporary_root) / "missing"
+            with self.assertRaises(FileNotFoundError):
+                initialize_project_directory(ProjectSettings("Missing"), missing)
+            self.assertFalse(missing.exists())
+
     def test_command_line_create_and_show(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_root:
             output = io.StringIO()
             with redirect_stdout(output):
-                self.assertEqual(main(["create", "Cat Study", "--root", temporary_root]), 0)
-            self.assertIn("Created project", output.getvalue())
+                self.assertEqual(main(["create", "Cat Study", "--storage-dir", temporary_root]), 0)
+            self.assertIn("Created parent directory", output.getvalue())
 
             project_path = next(Path(temporary_root).iterdir())
             output = io.StringIO()
             with redirect_stdout(output):
                 self.assertEqual(main(["show", str(project_path)]), 0)
-            self.assertIn("Canvas: 64 x 64", output.getvalue())
+            self.assertIn("Canvas setting: 64 x 64", output.getvalue())
+
+    def test_create_help_describes_parent_directory_and_defaults(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as exit_result:
+            main(["create", "--help"])
+
+        self.assertEqual(exit_result.exception.code, 0)
+        self.assertIn("--storage-dir DIRECTORY", output.getvalue())
+        self.assertIn("Where to place new parent directories", output.getvalue())
+        self.assertIn("Default child canvas width", output.getvalue())
+        self.assertNotIn("--sprite", output.getvalue())
 
 
 if __name__ == "__main__":
