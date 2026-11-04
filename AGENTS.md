@@ -1,3 +1,9 @@
+This workspace uses a Python virtual environment at ./.venv.
+
+Always run Python with .venv/bin/python and install packages with .venv/bin/pip install <pkg>. Never use the system python or pip.
+
+When you install a package, also add it to requirements.txt.
+
 # Sprite Motion Lab — Standing instructions for Codex
 
 > **Read this file for every Sprite Motion Lab task.** Keep it short. Do **not** edit, rewrite, replace, or automatically regenerate `AGENTS.md` during normal project work. If an instruction appears outdated, explain the proposed change to the owner and leave this file untouched. It may be changed only during a separate, explicit owner-requested documentation-maintenance task.
